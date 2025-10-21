@@ -147,7 +147,7 @@ void Components(int CPU/*1 for cpu*/, int GPU/*1 for gpu*/) {
 	}
 	if (GPU == 1){
 		std::string GPU = exec("wmic path win32_VideoController get name");
-		info.GPU =  CleanWMICOutput(GPU);
+		info.GPU = CleanWMICOutput(GPU);
 	}
 }
 
@@ -312,3 +312,4 @@ int main() {
 	//std::cout << "DEBUG: UsernameUTF8='" << UserNameUTF8 << "'" << std::endl;
 
 }
+

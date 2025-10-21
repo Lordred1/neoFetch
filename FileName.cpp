@@ -34,7 +34,7 @@ std::string exec(const char* cmd) {
 	return result;
 }
 
-std::string GetMemoryInfo() {
+void GetMemoryInfo() {
 	MEMORYSTATUSEX statex;
 	statex.dwLength = sizeof(statex);
 	GlobalMemoryStatusEx(&statex);
@@ -43,7 +43,7 @@ std::string GetMemoryInfo() {
 	// Convert to MB
 	std::ostringstream oss;
 	oss << "RAM: " << (AvailPhys / (1024 * 1024)) << " / " << (totalPhys / (1024 * 1024)) << " MB";
-	return oss.str();
+	info.Memory = oss.str();
 }
 
 std::string GetEnvVar(const std::string& name) {
@@ -147,7 +147,7 @@ void Components(int CPU/*1 for cpu*/, int GPU/*1 for gpu*/) {
 	}
 	if (GPU == 1){
 		std::string GPU = exec("wmic path win32_VideoController get name");
-		info.GPU = CleanWMICOutput(GPU);
+		info.GPU =  CleanWMICOutput(GPU);
 	}
 }
 
@@ -233,7 +233,7 @@ static int AsciiArt(const HANDLE hConsoleOUT, const std::string CurrentUserName,
 			continue;
 		}
 		if (rowIndex == 5) {
-			std::cout << "\t\t" << GetMemoryInfo() << '\n';
+			std::cout << "\t\t" << info.Memory << '\n';
 			rowIndex += 1;
 			continue;
 		}
@@ -312,4 +312,3 @@ int main() {
 	//std::cout << "DEBUG: UsernameUTF8='" << UserNameUTF8 << "'" << std::endl;
 
 }
-

@@ -1,4 +1,4 @@
-﻿#include <stdlib.h>
+#include <stdlib.h>
 #include <cstdlib>
 #include <windows.h>
 #include <iostream>
@@ -13,13 +13,16 @@
 #include <cctype>
 #include <regex>
 
-//#include <wdm.h>
-//Steps
-// 0.  make ascii art
-// 1.  Get the windows version 
-// 2.  Get the info at the side 
-// 3.  Make the ascci art in a diffrent file to be customized
-// 4.
+//NEW TODO: MAKE IT FASTER USING THREADING #include <thread>
+#include <thread>//IDEA use diffrent threads to get all the information at the same time
+struct AsciiArtInfo {
+	std::string CPU;
+	std::string GPU;
+	std::string BootTime;
+	std::string Shell;
+	std::string Memory;
+	std::string Resolution;
+} info;
 
 std::string exec(const char* cmd) {
 	std::array<char, 128> buffer;
@@ -113,7 +116,7 @@ std::string CleanWMICOutput(const std::string& input) {
 }
 
 
-std::string GetTimes() {
+void GetTimes() {
 	ULONGLONG uptimeMS = GetTickCount64();
 	FILETIME ft;
 	GetSystemTimeAsFileTime(&ft);
@@ -134,17 +137,17 @@ std::string GetTimes() {
 		<< " at "
 		<< stUTC.wHour << ":"
 		<< stUTC.wMinute;
-	return oss.str();
+	info.BootTime = oss.str();
 }
 
-std::string Components(int CPU/*1 for cpu*/, int GPU/*1 for gpu*/) {
+void Components(int CPU/*1 for cpu*/, int GPU/*1 for gpu*/) {
 	if (CPU == 1){
 		std::string CPU = exec("wmic cpu get name");
-		return CleanWMICOutput(CPU);
+		info.CPU = CleanWMICOutput(CPU);
 	}
 	if (GPU == 1){
 		std::string GPU = exec("wmic path win32_VideoController get name");
-		return CleanWMICOutput(GPU);
+		info.GPU =  CleanWMICOutput(GPU);
 	}
 }
 
@@ -164,8 +167,17 @@ void ColorRotate(HANDLE hConsoleOUT, int Color_Row_Print/*0-8 for the first set 
 	std::cout << std::endl;
 }
 
+
 static int AsciiArt(const HANDLE hConsoleOUT, const std::string CurrentUserName, const std::string HostName) {
-	std::string Boot_Time = GetTimes();
+	std::thread cpuThread(Components, 1, 0);
+	std::thread gpuThread(Components, 0, 1);
+	std::thread memThread(GetMemoryInfo);
+	std::thread BootTimeThread(GetTimes);
+	cpuThread.join();
+	gpuThread.join();
+	memThread.join();
+	BootTimeThread.join();
+
 	int rowIndex = 0;
 	std::ifstream file("ascii.conf");
 	if (!file.is_open()) {
@@ -201,17 +213,17 @@ static int AsciiArt(const HANDLE hConsoleOUT, const std::string CurrentUserName,
 			continue;
 		}
 		if (rowIndex == 1) {
-			std::cout << "\t\tCPU: " << Components(1, 0) << '\n';
+			std::cout << "\t\tCPU: " << /*Components(1, 0)*/info.CPU << '\n';
 			rowIndex += 1;
 			continue;
 		}
 		if (rowIndex == 2) {
-			std::cout << "\t\tGPU: " << Components(0, 1) << '\n';
+			std::cout << "\t\tGPU: " << info.GPU << '\n';
 			rowIndex += 1;
 			continue;
 		}
 		if (rowIndex == 3) {
-			std::cout << "\t\tBoot Time: " << Boot_Time << '\n';
+			std::cout << "\t\tBoot Time: " << info.BootTime << '\n';
 			rowIndex += 1;
 			continue;
 		}
